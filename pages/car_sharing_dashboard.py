@@ -7,7 +7,7 @@ st.set_page_config(page_title="Car Sharing Dashboard", layout="wide")
 # 🚗 Titre et description
 # ===============================
 st.title("🚗 Car Sharing Dashboard")
-st.markdown("Analyse des trajets, revenus et performances de la flotte de voitures partagées.")
+st.markdown("Analysis of trips, revenue, and performance of the shared car fleet")
 
 # ===============================
 # 📥 Chargement des données
@@ -46,7 +46,7 @@ trips_df_merged["pickup_date"] = trips_df_merged["pickup_time"].dt.date
 # ===============================
 st.sidebar.header("🔍 Filtres")
 cars_brand = st.sidebar.multiselect(
-    "Sélectionnez une ou plusieurs marques",
+    "Select one or more car brands",
     options=trips_df_merged["brand"].unique(),
     default=trips_df_merged["brand"].unique()
 )
@@ -60,19 +60,45 @@ else:
 # ===============================
 # 📊 Métriques business
 # ===============================
-st.subheader("📈 Indicateurs clés")
+st.subheader("📈 Key Metrics")
 
 total_trips = len(trips_df_filtered)
 total_distance = trips_df_filtered["distance"].sum()
 top_car = trips_df_filtered.groupby("model")["revenue"].sum().idxmax()
 
 col1, col2, col3 = st.columns(3)
-col1.metric("Total de trajets", total_trips)
-col2.metric("Modèle le plus rentable", top_car)
-col3.metric("Distance totale (km)", f"{total_distance:,.2f}")
+col1.metric("Total Trips", total_trips)
+col2.metric("Top Earning Car Model", top_car)
+col3.metric("Total Distance (km)", f"{total_distance:,.2f}")
 
 # ===============================
 # 🧾 Aperçu des données filtrées
 # ===============================
-st.subheader("🗂️ Données filtrées")
-st.dataframe(trips_df_filtered.head())
+st.subheader("🗂️ Filtered Data ✅")
+st.dataframe(trips_df_filtered.head(10)) 
+
+st.subheader("📅 Number of Trips per Day")
+
+trips_per_day = trips_df_filtered.groupby("pickup_date").size()
+
+st.line_chart(trips_per_day)
+
+st.subheader("🚘Revenue per Car Model 💰🚘")
+
+revenue_by_model = trips_df_filtered.groupby("model")["revenue"].sum().sort_values(ascending=False)
+
+st.bar_chart(revenue_by_model)
+
+st.subheader("📈Cumulative Revenue Growth Over Time")
+
+cumulative_revenue = trips_df_filtered.groupby("pickup_date")["revenue"].sum().cumsum()
+
+st.area_chart(cumulative_revenue)
+st.subheader("⏱️ Average Trip Duration by City")
+
+# Calculer la durée en minutes
+trips_df_filtered["trip_duration_min"] = (trips_df_filtered["dropoff_time"] - trips_df_filtered["pickup_time"]).dt.total_seconds() / 60
+
+avg_duration_by_city = trips_df_filtered.groupby("city_name")["trip_duration_min"].mean().sort_values(ascending=False)
+
+st.bar_chart(avg_duration_by_city)
